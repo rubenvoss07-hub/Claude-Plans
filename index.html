@@ -6,7 +6,8 @@
 <meta name="description" content="Interactive physics simulation: a tennis ball races a crumpled paper ball from a configurable drop height, with air drag, buoyancy, bounces and live charts.">
 <meta name="color-scheme" content="light dark">
 <title>Falling-Ball Lab — Tennis vs Paper</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎾</text></svg>">
+<link rel="icon" type="image/png" href="data:image/png;base64,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">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎾</text></svg>">
 <style>
   :root {
     color-scheme: light;
@@ -14,7 +15,7 @@
     --surface: #fcfcfb;
     --ink:     #0b0b0b;
     --ink-2:   #52514e;
-    --muted:   #898781;
+    --muted:   #6b6a64;   /* 5.3:1 on the light surfaces — #898781 was 3.5:1, failing AA at 11px */
     --grid:    #e1e0d9;
     --axis:    #c3c2b7;
     --border:  rgba(11,11,11,.10);
@@ -158,7 +159,7 @@
   .legend .note { margin-left: auto; color: var(--muted); font-size: 0.78rem; }
   .chart-box { position: relative; margin-top: 10px; }
   .chart-box h2 { color: var(--ink-2); font-weight: 600; margin-bottom: 4px; }
-  .chart-box canvas { width: 100%; height: 200px; display: block; touch-action: pan-y; }
+  .chart-box canvas { width: 100%; height: 200px; display: block; touch-action: pan-y pinch-zoom; }
   .tooltip {
     position: absolute; pointer-events: none; display: none; z-index: 3;
     background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
@@ -195,6 +196,10 @@
     border: 1px solid var(--border); border-radius: 6px; padding: 2px 6px;
   }
   .ctl input[type=range] { width: 100%; accent-color: var(--accent); margin: 4px 0 0; }
+  /* below 16px iOS Safari zooms the page on focus and never zooms back */
+  @media (pointer: coarse) {
+    .ctl input[type=number] { font-size: 16px; }
+  }
   .ctl-check { display: flex; align-items: center; gap: 8px; margin: 10px 0; font-size: 0.86rem; color: var(--ink-2); }
   .ctl-check input { accent-color: var(--accent); width: 16px; height: 16px; }
 
@@ -232,6 +237,24 @@
     <p class="hint">Space = drop / pause &nbsp;·&nbsp; R = reset</p>
   </section>
 
+  <aside class="panel controls" aria-label="Parameters">
+    <div class="presets" role="group" aria-label="Presets">
+      <button data-preset="defaults">Defaults</button>
+      <button data-preset="vacuum">Vacuum</button>
+      <button data-preset="moon">Moon</button>
+      <button data-preset="pisa">Pisa 55&nbsp;m</button>
+    </div>
+    <h2 id="hd-env">Environment</h2>
+    <div id="grp-env" role="group" aria-labelledby="hd-env"></div>
+    <h2 id="hd-sim">Simulation</h2>
+    <div id="grp-sim" role="group" aria-labelledby="hd-sim"></div>
+    <h2 id="hd-tennis"><span class="chip tennis" aria-hidden="true"></span>Tennis ball</h2>
+    <div id="grp-tennis" role="group" aria-labelledby="hd-tennis"></div>
+    <h2 id="hd-paper"><span class="chip paper" aria-hidden="true"></span>Paper ball</h2>
+    <div id="grp-paper" role="group" aria-labelledby="hd-paper"></div>
+    <p class="hint">Changing a physical parameter resets the drop. Playback speed, bounce and trail apply live.</p>
+  </aside>
+
   <div class="mid">
     <div class="stats" aria-label="Live readouts">
       <div class="tile">
@@ -254,13 +277,13 @@
       </div>
     </div>
 
-    <p class="race" id="race" aria-live="polite">Press <b>Drop</b> to start the race.</p>
+    <p class="race" id="race">Press <b>Drop</b> to start the race.</p>
 
     <section class="panel charts" aria-label="Charts">
       <div class="legend">
         <span class="item"><span class="chip tennis" aria-hidden="true"></span>Tennis ball</span>
         <span class="item"><span class="chip paper" aria-hidden="true"></span>Paper ball</span>
-        <span class="note">hover a chart for values</span>
+        <span class="note">hover or touch a chart for values</span>
       </div>
       <div class="chart-box">
         <h2>Height above ground (m)</h2>
@@ -321,23 +344,6 @@
     </details>
   </div>
 
-  <aside class="panel controls" aria-label="Parameters">
-    <div class="presets" role="group" aria-label="Presets">
-      <button data-preset="defaults">Defaults</button>
-      <button data-preset="vacuum">Vacuum</button>
-      <button data-preset="moon">Moon</button>
-      <button data-preset="pisa">Pisa 55&nbsp;m</button>
-    </div>
-    <h2>Environment</h2>
-    <div id="grp-env"></div>
-    <h2>Simulation</h2>
-    <div id="grp-sim"></div>
-    <h2><span class="chip tennis" aria-hidden="true"></span>Tennis ball</h2>
-    <div id="grp-tennis"></div>
-    <h2><span class="chip paper" aria-hidden="true"></span>Paper ball</h2>
-    <div id="grp-paper"></div>
-    <p class="hint">Changing a physical parameter resets the drop. Playback speed, bounce and trail apply live.</p>
-  </aside>
 </main>
 
 <footer>A single static page — no build step, no dependencies. Served happily by GitHub Pages.</footer>
@@ -377,9 +383,12 @@ const PRESETS = {
 const P = {};                       // current parameter values
 const inputs = {};                  // k -> {num, range} or {check}
 const $ = id => document.getElementById(id);
+const GROUP_NAMES = { env: 'Environment', sim: 'Simulation', tennis: 'Tennis ball', paper: 'Paper ball' };
 
 for (const def of DEFS) {
   const host = $('grp-' + def.grp);
+  const srName = GROUP_NAMES[def.grp] + ' ' + def.label.toLowerCase() +
+                 (def.unit ? ', ' + def.unit : '');
   if (def.type === 'check') {
     const lab = document.createElement('label');
     lab.className = 'ctl-check';
@@ -388,7 +397,7 @@ for (const def of DEFS) {
     lab.append(cb, def.label);
     host.append(lab);
     inputs[def.k] = { check: cb };
-    cb.addEventListener('change', () => setParam(def, cb.checked));
+    cb.addEventListener('change', () => commitParam(def, cb.checked));
   } else {
     const wrap = document.createElement('div');
     wrap.className = 'ctl';
@@ -404,36 +413,43 @@ for (const def of DEFS) {
     num.type = 'number';
     num.id = 'in-' + def.k;
     num.min = def.min; num.max = def.max; num.step = def.step;
+    num.setAttribute('aria-label', srName);
     const range = document.createElement('input');
     range.type = 'range';
     range.min = def.min; range.max = def.max; range.step = def.step;
-    range.setAttribute('aria-label', def.label);
+    range.setAttribute('aria-label', srName + ' slider');
     row.append(lab, unit, num);
     wrap.append(row, range);
     host.append(wrap);
     inputs[def.k] = { num, range };
-    range.addEventListener('input', () => { num.value = range.value; setParam(def, +range.value); });
+    range.addEventListener('input', () => { num.value = range.value; commitParam(def, +range.value); });
+    // While typing, never write back into the field: echoing the clamped,
+    // canonicalized number destroys inputs like "0.3" (the "0" prefix clamps
+    // to min and replaces the text under the caret). State follows the keystrokes;
+    // the field itself is only normalized on 'change'.
     num.addEventListener('input', () => {
       const v = parseFloat(num.value);
-      if (Number.isFinite(v)) { range.value = v; setParam(def, clamp(v, def.min, def.max)); }
+      if (Number.isFinite(v)) {
+        const c = clamp(v, def.min, def.max);
+        range.value = c;
+        commitParam(def, c);
+      }
     });
-    num.addEventListener('change', () => {   // clamp once the user is done typing
+    num.addEventListener('change', () => {   // clamp + normalize once the user is done typing
       const v = clamp(parseFloat(num.value), def.min, def.max);
       num.value = Number.isFinite(v) ? v : P[def.k];
       range.value = num.value;
-      setParam(def, +num.value);
+      commitParam(def, +num.value);
     });
   }
 }
 
 function clamp(v, lo, hi) { return Math.min(hi, Math.max(lo, v)); }
 
-function setParam(def, value, skipReset) {
+// Commit a new value into P without touching the input elements.
+function commitParam(def, value) {
   P[def.k] = value;
-  const c = inputs[def.k];
-  if (c.check) c.check.checked = value;
-  else { c.num.value = value; c.range.value = value; }
-  if (!skipReset && !def.live) resetSim();
+  if (!def.live) resetSim();
   refreshDerived();
 }
 
@@ -578,6 +594,8 @@ function resetSim() {
     announced: { tennis: false, paper: false, result: false },
   };
   phase = 'ready';
+  clearTimeout(announceTimer);     // a landing announced <150 ms before reset must not fire after it
+  for (const ch of charts) { ch.hoverT = null; ch.tip.style.display = 'none'; }
   syncButtons();
 }
 
@@ -599,11 +617,15 @@ function advance(realDt) {
     stepBall(sim.balls.paper,  sim.bodies.paper,  sim.env, DT);
     sim.t += DT;
     if (sim.t >= sim.nextSample) { recordSample(); sim.nextSample += SAMPLE_DT; }
-    if (P.trail && sim.t >= sim.nextTrail) {
-      for (const key of ['tennis', 'paper']) {
-        const b = sim.balls[key];
-        if (!b.done) b.trail.push(b.y);
+    if (sim.t >= sim.nextTrail) {
+      if (P.trail) {
+        for (const key of ['tennis', 'paper']) {
+          const b = sim.balls[key];
+          if (!b.done) b.trail.push(b.y);
+        }
       }
+      // cadence advances even while the trail is toggled off, otherwise
+      // re-enabling it dumps one dot per physics step until it catches up
       sim.nextTrail += TRAIL_DT;
     }
     if (sim.balls.tennis.done && sim.balls.paper.done) {
@@ -649,6 +671,7 @@ function refreshDerived() {
   $('r-vt-p').textContent = fmtVt(pred.paper.vt);
   $('r-pt-t').textContent = fmtLand(pred.tennis);
   $('r-pt-p').textContent = fmtLand(pred.paper);
+  invalidate();
 }
 
 function refreshLive() {
@@ -703,8 +726,10 @@ function refreshRace(bt, bp) {
   const t1 = bt.fallTime, t2 = bp.fallTime;
   if (t1 !== null && t2 !== null) {
     const d = t2 - t1;
+    const airless = !P.airOn || P.rho === 0;
     setRace(Math.abs(d) < 0.005
-      ? '<b>Dead heat!</b> Both landed at ' + t1.toFixed(2) + ' s — with no air, mass doesn\'t matter.'
+      ? '<b>Dead heat!</b> Both landed at ' + t1.toFixed(2) + ' s — ' +
+        (airless ? 'with no air, mass doesn\'t matter.' : 'their drag-to-weight ratios balance out.')
       : '<b>' + (d > 0 ? 'Tennis ball wins' : 'Paper ball wins') + '</b> by ' + Math.abs(d).toFixed(2) +
         ' s (' + t1.toFixed(2) + ' s vs ' + t2.toFixed(2) + ' s).');
     announceOnce('result', $('race').textContent);
@@ -741,7 +766,9 @@ function readTheme() {
   };
 }
 const darkMq = window.matchMedia('(prefers-color-scheme: dark)');
-if (darkMq.addEventListener) darkMq.addEventListener('change', readTheme);
+if (darkMq.addEventListener) {
+  darkMq.addEventListener('change', () => { readTheme(); invalidate(); });
+}
 
 /* ============================ canvas plumbing =========================== */
 
@@ -929,7 +956,8 @@ const charts = [
   makeChart('chartH', 'tipH', S => [S.hT, S.hP], d => d.yMax, 'm', () => []),
   makeChart('chartV', 'tipV', S => [S.vT, S.vP], d => d.vMax, 'm/s',
     d => [pred.tennis, pred.paper]
-      .map((p, i) => ({ v: p.vt, color: i === 0 ? theme.tennis : theme.paper }))
+      .map((p, i) => ({ v: p.vt, color: i === 0 ? theme.tennis : theme.paper,
+                        name: i === 0 ? 'Tennis' : 'Paper' }))
       .filter(g => Number.isFinite(g.v) && g.v <= d.vMax)),
 ];
 
@@ -968,21 +996,26 @@ function drawChart(ch, dom) {
   ctx.strokeStyle = theme.axis;
   ctx.beginPath(); ctx.moveTo(PADL, Y(0)); ctx.lineTo(w - PADR, Y(0)); ctx.stroke();
 
-  // terminal-velocity guides (dashed, series-colored)
+  // terminal-velocity guides: dashed series-colored line, but the label names
+  // the ball in readable ink so the guide is never color-only encoded
+  let prevGuideY = null;
   for (const gd of ch.guides(dom)) {
+    const gy = Y(gd.v);
     ctx.strokeStyle = gd.color;
-    ctx.globalAlpha = 0.55;
     ctx.setLineDash([5, 5]);
-    ctx.beginPath(); ctx.moveTo(PADL, Y(gd.v)); ctx.lineTo(w - PADR, Y(gd.v)); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(PADL, gy); ctx.lineTo(w - PADR, gy); ctx.stroke();
     ctx.setLineDash([]);
-    ctx.globalAlpha = 1;
-    ctx.fillStyle = theme.muted;
-    ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
-    ctx.fillText('terminal ' + gd.v.toFixed(1), PADL + 4, Y(gd.v) - 2);
+    ctx.fillStyle = theme.ink2;
+    ctx.textAlign = 'left';
+    const below = prevGuideY !== null && Math.abs(gy - prevGuideY) < 15;
+    ctx.textBaseline = below ? 'top' : 'bottom';
+    ctx.fillText(gd.name + ' terminal ' + gd.v.toFixed(1) + ' m/s', PADL + 4, gy + (below ? 3 : -3));
+    prevGuideY = gy;
   }
 
   const S = sim.S;
   if (S.t.length < 2) {
+    ch.tip.style.display = 'none';   // the hover branch below is unreachable without data
     ctx.fillStyle = theme.muted;
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText('Press Drop to draw the curves', PADL + pw / 2, PADT + ph / 2);
@@ -1070,21 +1103,43 @@ function placeTooltip(ch, px, S, i) {
 }
 
 for (const ch of charts) {
-  ch.cv.addEventListener('pointermove', e => {
+  const setHover = e => {
     const r = ch.cv.getBoundingClientRect();
     const dom = chartDomains();
     ch.hoverT = ((e.clientX - r.left) - PADL) / (r.width - PADL - PADR) * dom.tMax;
+    invalidate();
+  };
+  ch.cv.addEventListener('pointermove', setHover);
+  ch.cv.addEventListener('pointerdown', setHover);   // a plain tap fires no pointermove
+  ch.cv.addEventListener('pointerleave', e => {
+    // touch fires pointerleave the instant the finger lifts — keep the readout
+    // up so it can actually be read; tapping outside the chart dismisses it
+    if (e.pointerType === 'mouse') { ch.hoverT = null; invalidate(); }
   });
-  ch.cv.addEventListener('pointerleave', () => { ch.hoverT = null; });
 }
+document.addEventListener('pointerdown', e => {
+  for (const ch of charts) {
+    if (ch.hoverT !== null && !ch.cv.parentElement.contains(e.target)) {
+      ch.hoverT = null;
+      invalidate();
+    }
+  }
+});
 
 /* ============================== interaction ============================= */
 
 function syncButtons() {
-  $('btnDrop').textContent = phase === 'finished' ? 'Drop again' : 'Drop';
-  $('btnDrop').disabled = phase === 'running' || phase === 'paused';
-  $('btnPause').disabled = phase !== 'running' && phase !== 'paused';
-  $('btnPause').textContent = phase === 'paused' ? 'Resume' : 'Pause';
+  const drop = $('btnDrop'), pause = $('btnPause');
+  // read focus BEFORE toggling disabled — disabling the focused element
+  // silently drops keyboard focus to <body> the moment the flag is set
+  const active = document.activeElement;
+  drop.textContent = phase === 'finished' ? 'Drop again' : 'Drop';
+  drop.disabled = phase === 'running' || phase === 'paused';
+  pause.disabled = phase !== 'running' && phase !== 'paused';
+  pause.textContent = phase === 'paused' ? 'Resume' : 'Pause';
+  if (active === drop && drop.disabled && !pause.disabled) pause.focus();
+  else if (active === pause && pause.disabled && !drop.disabled) drop.focus();
+  invalidate();
 }
 function doDrop() {
   if (phase === 'finished') resetSim();
@@ -1106,28 +1161,44 @@ $('btnReset').addEventListener('click', () => { resetSim(); });
 
 document.addEventListener('keydown', e => {
   const tag = (e.target.tagName || '').toLowerCase();
-  if (tag === 'input' || tag === 'button' || tag === 'summary' || tag === 'textarea') return;
+  if (tag === 'input' || tag === 'textarea') return;           // user is typing
   if (e.code === 'Space') {
+    if (tag === 'button' || tag === 'summary') return;          // native space activation
     e.preventDefault();
     (phase === 'running' || phase === 'paused') ? doPause() : doDrop();
   } else if (e.key === 'r' || e.key === 'R') {
-    resetSim();
+    resetSim();                       // works even while a button holds focus
   }
 });
 
 /* ================================ main loop ============================= */
 
+// Draw on demand: while the sim runs every frame is dirty, but when idle
+// (ready / paused / finished) redraw only after an input, hover, resize or
+// theme change — an always-on 60 fps loop over three DPR-scaled canvases
+// needlessly drains batteries while someone just reads the page.
 let lastTs = null;
+let needsDraw = true;
+function invalidate() { needsDraw = true; }
 function frame(ts) {
   if (lastTs === null) lastTs = ts;
   const realDt = (ts - lastTs) / 1000;
   lastTs = ts;
-  if (phase === 'running') advance(realDt);
-  const dom = chartDomains();
-  drawScene();
-  for (const ch of charts) drawChart(ch, dom);
-  refreshLive();
+  if (phase === 'running') { advance(realDt); needsDraw = true; }
+  if (needsDraw) {
+    needsDraw = false;
+    const dom = chartDomains();
+    drawScene();
+    for (const ch of charts) drawChart(ch, dom);
+    refreshLive();
+  }
   requestAnimationFrame(frame);
+}
+window.addEventListener('resize', invalidate);
+if (window.ResizeObserver) {
+  const ro = new ResizeObserver(invalidate);
+  ro.observe(sceneCv);
+  for (const ch of charts) ro.observe(ch.cv);
 }
 
 /* ================================= boot ================================= */
