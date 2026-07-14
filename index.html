@@ -1,0 +1,1142 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Interactive physics simulation: a tennis ball races a crumpled paper ball from a configurable drop height, with air drag, buoyancy, bounces and live charts.">
+<meta name="color-scheme" content="light dark">
+<title>Falling-Ball Lab — Tennis vs Paper</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎾</text></svg>">
+<style>
+  :root {
+    color-scheme: light;
+    --page:    #f9f9f7;
+    --surface: #fcfcfb;
+    --ink:     #0b0b0b;
+    --ink-2:   #52514e;
+    --muted:   #898781;
+    --grid:    #e1e0d9;
+    --axis:    #c3c2b7;
+    --border:  rgba(11,11,11,.10);
+    --tennis:  #eda100;   /* categorical slot: yellow (validated, light) */
+    --paper:   #2a78d6;   /* categorical slot: blue   (validated, light) */
+    --accent:  #2a78d6;
+    --accent-ink: #ffffff;
+    --ball-tennis: #b9c42c;
+    --ball-tennis-seam: #f4f7df;
+    --ball-paper: #e9e9e2;
+    --ball-paper-line: #a5a49b;
+    --ball-outline: rgba(11,11,11,.35);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      color-scheme: dark;
+      --page:    #0d0d0d;
+      --surface: #1a1a19;
+      --ink:     #ffffff;
+      --ink-2:   #c3c2b7;
+      --muted:   #898781;
+      --grid:    #2c2c2a;
+      --axis:    #383835;
+      --border:  rgba(255,255,255,.10);
+      --tennis:  #c98500;  /* categorical slot: yellow (validated, dark) */
+      --paper:   #3987e5;  /* categorical slot: blue   (validated, dark) */
+      --accent:  #3987e5;
+      --accent-ink: #0b0b0b;
+      --ball-tennis: #b9c42c;
+      --ball-tennis-seam: #f4f7df;
+      --ball-paper: #d4d4cc;
+      --ball-paper-line: #7c7b73;
+      --ball-outline: rgba(0,0,0,.45);
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--page);
+    color: var(--ink);
+    font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+    padding: 20px clamp(12px, 3vw, 32px) 48px;
+  }
+  h1 { font-size: 1.45rem; margin: 0 0 4px; letter-spacing: -0.01em; }
+  h2 { font-size: 0.95rem; margin: 0; }
+  .sub { color: var(--ink-2); margin: 0 0 20px; max-width: 68ch; }
+
+  .layout {
+    display: grid;
+    grid-template-areas: "scene mid controls";
+    grid-template-columns: 340px minmax(0,1fr) 320px;
+    gap: 16px;
+    align-items: start;
+  }
+  @media (max-width: 1180px) {
+    .layout {
+      grid-template-areas: "scene controls" "mid mid";
+      grid-template-columns: minmax(0,1fr) 320px;
+    }
+  }
+  @media (max-width: 760px) {
+    .layout {
+      grid-template-areas: "scene" "controls" "mid";
+      grid-template-columns: minmax(0,1fr);
+    }
+  }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+  }
+  .scene-panel { grid-area: scene; }
+  .mid { grid-area: mid; display: grid; gap: 16px; min-width: 0; }
+  .controls { grid-area: controls; }
+
+  /* ---------- scene ---------- */
+  .scene-head { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 10px; }
+  .scene-head .time {
+    margin-left: auto;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-2);
+    font-size: 0.9rem;
+  }
+  #scene { width: 100%; height: 480px; display: block; border-radius: 8px; }
+
+  button {
+    font: inherit;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--ink);
+    padding: 6px 14px;
+    cursor: pointer;
+  }
+  button:hover { border-color: var(--muted); }
+  button:focus-visible, input:focus-visible, summary:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+  button.primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--accent-ink);
+    font-weight: 600;
+  }
+  button.primary:hover { filter: brightness(1.08); }
+  button:disabled { opacity: 0.45; cursor: default; }
+  .hint { color: var(--muted); font-size: 0.78rem; margin-top: 8px; }
+
+  /* ---------- stats ---------- */
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; }
+  .tile {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 10px 14px;
+  }
+  .tile .t-head { display: flex; align-items: center; gap: 7px; color: var(--ink-2); font-size: 0.82rem; }
+  .tile .t-val { font-size: 1.35rem; font-weight: 650; margin-top: 2px; }
+  .tile .t-rows { margin-top: 4px; font-size: 0.85rem; color: var(--ink-2); display: grid; gap: 1px; }
+  .tile .t-rows b { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .chip { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex: none; }
+  .chip.tennis { background: var(--tennis); }
+  .chip.paper  { background: var(--paper); }
+
+  .race {
+    border-radius: 12px; border: 1px solid var(--border); background: var(--surface);
+    padding: 10px 14px; color: var(--ink-2); font-size: 0.92rem;
+  }
+  .race b { color: var(--ink); }
+
+  /* ---------- charts ---------- */
+  .charts .legend {
+    display: flex; gap: 16px; align-items: center; flex-wrap: wrap;
+    font-size: 0.85rem; color: var(--ink-2); margin-bottom: 8px;
+  }
+  .legend .item { display: inline-flex; align-items: center; gap: 6px; }
+  .legend .note { margin-left: auto; color: var(--muted); font-size: 0.78rem; }
+  .chart-box { position: relative; margin-top: 10px; }
+  .chart-box h2 { color: var(--ink-2); font-weight: 600; margin-bottom: 4px; }
+  .chart-box canvas { width: 100%; height: 200px; display: block; touch-action: pan-y; }
+  .tooltip {
+    position: absolute; pointer-events: none; display: none; z-index: 3;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+    box-shadow: 0 4px 14px rgba(0,0,0,.18);
+    padding: 6px 10px; font-size: 0.8rem; color: var(--ink-2); white-space: nowrap;
+  }
+  .tooltip b { color: var(--ink); font-variant-numeric: tabular-nums; }
+  .tooltip .row { display: flex; align-items: center; gap: 6px; }
+
+  /* ---------- table ---------- */
+  table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+  caption { text-align: left; color: var(--ink-2); font-size: 0.85rem; padding-bottom: 6px; }
+  th, td { text-align: right; padding: 5px 8px; border-top: 1px solid var(--grid); font-variant-numeric: tabular-nums; }
+  th { color: var(--ink-2); font-weight: 600; }
+  thead th { border-top: none; }
+  th:first-child, td:first-child { text-align: left; color: var(--ink-2); font-weight: 500; }
+  td { color: var(--ink); }
+  thead .h-chip { display: inline-flex; align-items: center; gap: 6px; }
+
+  /* ---------- controls ---------- */
+  .controls h2 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); margin: 16px 0 6px; }
+  .controls h2:first-of-type { margin-top: 10px; }
+  .controls h2 .chip { margin-right: 5px; vertical-align: baseline; }
+  .presets { display: flex; gap: 6px; flex-wrap: wrap; }
+  .presets button { padding: 4px 10px; font-size: 0.82rem; border-radius: 999px; }
+  .ctl { margin: 8px 0; }
+  .ctl .row1 { display: flex; align-items: baseline; gap: 6px; font-size: 0.86rem; }
+  .ctl label { color: var(--ink-2); }
+  .ctl .unit { color: var(--muted); font-size: 0.78rem; }
+  .ctl input[type=number] {
+    margin-left: auto; width: 5.2em; font: inherit; font-size: 0.86rem;
+    font-variant-numeric: tabular-nums; text-align: right;
+    color: var(--ink); background: transparent;
+    border: 1px solid var(--border); border-radius: 6px; padding: 2px 6px;
+  }
+  .ctl input[type=range] { width: 100%; accent-color: var(--accent); margin: 4px 0 0; }
+  .ctl-check { display: flex; align-items: center; gap: 8px; margin: 10px 0; font-size: 0.86rem; color: var(--ink-2); }
+  .ctl-check input { accent-color: var(--accent); width: 16px; height: 16px; }
+
+  details { border-top: 1px solid var(--grid); margin-top: 4px; padding-top: 10px; color: var(--ink-2); font-size: 0.9rem; }
+  summary { cursor: pointer; color: var(--ink); font-weight: 600; }
+  details code { background: var(--page); border: 1px solid var(--grid); border-radius: 5px; padding: 1px 5px; font-size: 0.85em; }
+  details p { max-width: 75ch; }
+
+  footer { color: var(--muted); font-size: 0.8rem; margin-top: 24px; }
+  .visually-hidden {
+    position: absolute; width: 1px; height: 1px; margin: -1px;
+    clip-path: inset(50%); overflow: hidden; white-space: nowrap;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Falling-Ball Lab: tennis ball vs paper ball</h1>
+  <p class="sub">Drop a tennis ball and a crumpled ball of paper from the same height and watch air
+  resistance decide the race. Every parameter is adjustable — try turning the air off to recreate
+  Galileo's (and Apollo 15's) result: without drag, they land together.</p>
+</header>
+
+<main class="layout">
+
+  <section class="panel scene-panel" aria-label="Drop scene">
+    <div class="scene-head">
+      <button id="btnDrop" class="primary">Drop</button>
+      <button id="btnPause" disabled>Pause</button>
+      <button id="btnReset">Reset</button>
+      <span class="time" id="clock">t = 0.00 s</span>
+    </div>
+    <canvas id="scene" role="img" aria-label="Animation of the two balls falling"></canvas>
+    <p class="hint">Space = drop / pause &nbsp;·&nbsp; R = reset</p>
+  </section>
+
+  <div class="mid">
+    <div class="stats" aria-label="Live readouts">
+      <div class="tile">
+        <div class="t-head"><span class="chip tennis" aria-hidden="true"></span>Tennis ball</div>
+        <div class="t-val" id="tHeight">— m</div>
+        <div class="t-rows">
+          <span>speed <b id="tSpeed">0.0 m/s</b></span>
+          <span>terminal <b id="tVt">—</b></span>
+          <span id="tStatus">ready</span>
+        </div>
+      </div>
+      <div class="tile">
+        <div class="t-head"><span class="chip paper" aria-hidden="true"></span>Paper ball</div>
+        <div class="t-val" id="pHeight">— m</div>
+        <div class="t-rows">
+          <span>speed <b id="pSpeed">0.0 m/s</b></span>
+          <span>terminal <b id="pVt">—</b></span>
+          <span id="pStatus">ready</span>
+        </div>
+      </div>
+    </div>
+
+    <p class="race" id="race" aria-live="polite">Press <b>Drop</b> to start the race.</p>
+
+    <section class="panel charts" aria-label="Charts">
+      <div class="legend">
+        <span class="item"><span class="chip tennis" aria-hidden="true"></span>Tennis ball</span>
+        <span class="item"><span class="chip paper" aria-hidden="true"></span>Paper ball</span>
+        <span class="note">hover a chart for values</span>
+      </div>
+      <div class="chart-box">
+        <h2>Height above ground (m)</h2>
+        <canvas id="chartH" role="img" aria-label="Line chart of height above ground versus time for both balls"></canvas>
+        <div class="tooltip" id="tipH"></div>
+      </div>
+      <div class="chart-box">
+        <h2>Speed (m/s)</h2>
+        <canvas id="chartV" role="img" aria-label="Line chart of speed versus time for both balls; dashed lines mark terminal velocities"></canvas>
+        <div class="tooltip" id="tipV"></div>
+      </div>
+    </section>
+
+    <section class="panel" aria-label="Results table">
+      <table id="results">
+        <caption>Numbers behind the picture — updates live as parameters change and balls land.</caption>
+        <thead>
+          <tr>
+            <th scope="col">Quantity</th>
+            <th scope="col"><span class="h-chip"><span class="chip tennis" aria-hidden="true"></span>Tennis</span></th>
+            <th scope="col"><span class="h-chip"><span class="chip paper" aria-hidden="true"></span>Paper</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Mass</td><td id="r-m-t"></td><td id="r-m-p"></td></tr>
+          <tr><td>Diameter</td><td id="r-d-t"></td><td id="r-d-p"></td></tr>
+          <tr><td>Drag coefficient C<sub>d</sub></td><td id="r-cd-t"></td><td id="r-cd-p"></td></tr>
+          <tr><td>Cross-section area</td><td id="r-a-t"></td><td id="r-a-p"></td></tr>
+          <tr><td>Terminal velocity</td><td id="r-vt-t"></td><td id="r-vt-p"></td></tr>
+          <tr><td>Predicted fall time</td><td id="r-pt-t"></td><td id="r-pt-p"></td></tr>
+          <tr><td>Measured fall time</td><td id="r-mt-t"></td><td id="r-mt-p"></td></tr>
+          <tr><td>Impact speed</td><td id="r-vi-t"></td><td id="r-vi-p"></td></tr>
+          <tr><td>Bounces</td><td id="r-b-t"></td><td id="r-b-p"></td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <details class="panel">
+      <summary>The physics inside</summary>
+      <p>Each ball is a sphere in free fall through still air. Taking <em>downward</em> as positive,
+      its acceleration is</p>
+      <p><code>a = g·(1 − ρV/m) − (ρ·C<sub>d</sub>·A / 2m) · v·|v|</code></p>
+      <p>The first term is gravity minus buoyancy (<code>V</code> = ball volume, <code>ρ</code> = air
+      density); the second is quadratic aerodynamic drag on the cross-section
+      <code>A = πr²</code>. Drag grows with the <em>square</em> of speed, so each ball approaches a
+      terminal velocity <code>v<sub>t</sub> = √(2·(m − ρV)·g / (ρ·C<sub>d</sub>·A))</code> where drag
+      balances weight.</p>
+      <p>The tennis ball (≈58 g over a 6.7 cm circle, C<sub>d</sub> ≈ 0.55 thanks to its fuzz) carries
+      about ten times more weight per unit of drag area than a 5 g crumpled sheet of A4 — so the paper
+      ball reaches its terminal velocity (≈6–7 m/s) within a couple of metres and falls behind, while
+      the tennis ball keeps accelerating toward ≈22 m/s. Set the air density to zero (or untick air
+      resistance) and both fall identically: mass cancels out of <code>a = g</code>.</p>
+      <p>The equations are integrated with a fixed-step 4th-order Runge–Kutta scheme (480 steps per
+      simulated second). Landings are located by interpolation inside the step; bounces reverse the
+      velocity scaled by the restitution coefficient. Crumpled paper is aerodynamically messy — its
+      measured C<sub>d</sub> ranges roughly 0.5–1.1 depending on how tightly it is crushed, which is
+      exactly why it is a slider.</p>
+    </details>
+  </div>
+
+  <aside class="panel controls" aria-label="Parameters">
+    <div class="presets" role="group" aria-label="Presets">
+      <button data-preset="defaults">Defaults</button>
+      <button data-preset="vacuum">Vacuum</button>
+      <button data-preset="moon">Moon</button>
+      <button data-preset="pisa">Pisa 55&nbsp;m</button>
+    </div>
+    <h2>Environment</h2>
+    <div id="grp-env"></div>
+    <h2>Simulation</h2>
+    <div id="grp-sim"></div>
+    <h2><span class="chip tennis" aria-hidden="true"></span>Tennis ball</h2>
+    <div id="grp-tennis"></div>
+    <h2><span class="chip paper" aria-hidden="true"></span>Paper ball</h2>
+    <div id="grp-paper"></div>
+    <p class="hint">Changing a physical parameter resets the drop. Playback speed, bounce and trail apply live.</p>
+  </aside>
+</main>
+
+<footer>A single static page — no build step, no dependencies. Served happily by GitHub Pages.</footer>
+<div class="visually-hidden" aria-live="polite" id="announce"></div>
+<noscript><p><strong>This simulation needs JavaScript to run.</strong></p></noscript>
+
+<script>
+'use strict';
+(() => {
+
+/* ============================== parameters ============================== */
+
+const DEFS = [
+  { k:'h0',  grp:'env', label:'Drop height',  unit:'m',     min:0.5,  max:100, step:0.5,  d:10 },
+  { k:'g',   grp:'env', label:'Gravity',      unit:'m/s²',  min:0.5,  max:25,  step:0.01, d:9.81 },
+  { k:'rho', grp:'env', label:'Air density',  unit:'kg/m³', min:0,    max:5,   step:0.005,d:1.225 },
+  { k:'airOn',  grp:'env', label:'Air resistance (drag + buoyancy)', type:'check', d:true },
+  { k:'speed',  grp:'sim', label:'Playback speed', unit:'×', min:0.05, max:3, step:0.05, d:1, live:true },
+  { k:'bounce', grp:'sim', label:'Bounce on landing', type:'check', d:true,  live:true },
+  { k:'trail',  grp:'sim', label:'Motion trail (strobe)', type:'check', d:true, live:true },
+  { k:'tm',  grp:'tennis', label:'Mass',             unit:'g',  min:1,    max:500, step:1,    d:58 },
+  { k:'td',  grp:'tennis', label:'Diameter',         unit:'cm', min:1,    max:40,  step:0.1,  d:6.7 },
+  { k:'tcd', grp:'tennis', label:'Drag coefficient', unit:'',   min:0.05, max:2,   step:0.01, d:0.55 },
+  { k:'te',  grp:'tennis', label:'Restitution (bounciness)', unit:'', min:0, max:0.95, step:0.01, d:0.73 },
+  { k:'pm',  grp:'paper',  label:'Mass',             unit:'g',  min:0.5,  max:200, step:0.1,  d:5 },
+  { k:'pd',  grp:'paper',  label:'Diameter',         unit:'cm', min:1,    max:40,  step:0.1,  d:5.5 },
+  { k:'pcd', grp:'paper',  label:'Drag coefficient', unit:'',   min:0.05, max:2,   step:0.01, d:0.78 },
+  { k:'pe',  grp:'paper',  label:'Restitution (bounciness)', unit:'', min:0, max:0.95, step:0.01, d:0.25 },
+];
+const PRESETS = {
+  defaults: {},
+  vacuum:   { airOn:false },
+  moon:     { g:1.62, airOn:false },
+  pisa:     { h0:55 },
+};
+
+const P = {};                       // current parameter values
+const inputs = {};                  // k -> {num, range} or {check}
+const $ = id => document.getElementById(id);
+
+for (const def of DEFS) {
+  const host = $('grp-' + def.grp);
+  if (def.type === 'check') {
+    const lab = document.createElement('label');
+    lab.className = 'ctl-check';
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    lab.append(cb, def.label);
+    host.append(lab);
+    inputs[def.k] = { check: cb };
+    cb.addEventListener('change', () => setParam(def, cb.checked));
+  } else {
+    const wrap = document.createElement('div');
+    wrap.className = 'ctl';
+    const row = document.createElement('div');
+    row.className = 'row1';
+    const lab = document.createElement('label');
+    lab.textContent = def.label;
+    lab.htmlFor = 'in-' + def.k;
+    const unit = document.createElement('span');
+    unit.className = 'unit';
+    unit.textContent = def.unit;
+    const num = document.createElement('input');
+    num.type = 'number';
+    num.id = 'in-' + def.k;
+    num.min = def.min; num.max = def.max; num.step = def.step;
+    const range = document.createElement('input');
+    range.type = 'range';
+    range.min = def.min; range.max = def.max; range.step = def.step;
+    range.setAttribute('aria-label', def.label);
+    row.append(lab, unit, num);
+    wrap.append(row, range);
+    host.append(wrap);
+    inputs[def.k] = { num, range };
+    range.addEventListener('input', () => { num.value = range.value; setParam(def, +range.value); });
+    num.addEventListener('input', () => {
+      const v = parseFloat(num.value);
+      if (Number.isFinite(v)) { range.value = v; setParam(def, clamp(v, def.min, def.max)); }
+    });
+    num.addEventListener('change', () => {   // clamp once the user is done typing
+      const v = clamp(parseFloat(num.value), def.min, def.max);
+      num.value = Number.isFinite(v) ? v : P[def.k];
+      range.value = num.value;
+      setParam(def, +num.value);
+    });
+  }
+}
+
+function clamp(v, lo, hi) { return Math.min(hi, Math.max(lo, v)); }
+
+function setParam(def, value, skipReset) {
+  P[def.k] = value;
+  const c = inputs[def.k];
+  if (c.check) c.check.checked = value;
+  else { c.num.value = value; c.range.value = value; }
+  if (!skipReset && !def.live) resetSim();
+  refreshDerived();
+}
+
+function applyPreset(name) {
+  const over = PRESETS[name];
+  for (const def of DEFS) {
+    const v = (def.k in over) ? over[def.k] : def.d;
+    P[def.k] = v;
+    const c = inputs[def.k];
+    if (c.check) c.check.checked = v;
+    else { c.num.value = v; c.range.value = v; }
+  }
+  resetSim();
+  refreshDerived();
+}
+document.querySelectorAll('.presets button').forEach(b =>
+  b.addEventListener('click', () => applyPreset(b.dataset.preset)));
+
+/* ================================ physics =============================== */
+
+const DT = 1 / 480;                 // integrator step (s of simulated time)
+const REST_V = 0.2;                 // below this bounce speed a ball settles (m/s)
+const T_CAP = 900;                  // hard stop for runaway configurations (s)
+
+// Downward velocity is positive; y is height above ground.
+function makeBody(m_g, d_cm, cd) {
+  const m = m_g / 1000, r = d_cm / 200;
+  return { m, cd, r, A: Math.PI * r * r, V: (4 / 3) * Math.PI * r ** 3 };
+}
+function accel(body, v, g, rho) {
+  return g * (1 - rho * body.V / body.m)
+       - (0.5 * rho * body.cd * body.A / body.m) * v * Math.abs(v);
+}
+// Classic RK4 on the pair (y, v) with dy/dt = -v, dv/dt = accel(v).
+function rk4(body, y, v, g, rho, dt) {
+  const a1 = accel(body, v, g, rho);
+  const a2 = accel(body, v + a1 * dt / 2, g, rho);
+  const a3 = accel(body, v + a2 * dt / 2, g, rho);
+  const a4 = accel(body, v + a3 * dt, g, rho);
+  return {
+    y: y - v * dt - (a1 + a2 + a3) * dt * dt / 6,
+    v: v + dt * (a1 + 2 * a2 + 2 * a3 + a4) / 6,
+  };
+}
+function terminalVelocity(body, g, rho) {
+  if (rho <= 0) return Infinity;
+  const effW = (body.m - rho * body.V) * g;
+  if (effW <= 0) return NaN;                       // buoyant: floats
+  return Math.sqrt(2 * effW / (rho * body.cd * body.A));
+}
+
+function envNow() {
+  return { g: P.g, rho: P.airOn ? P.rho : 0 };
+}
+function bodiesNow() {
+  return {
+    tennis: makeBody(P.tm, P.td, P.tcd),
+    paper:  makeBody(P.pm, P.pd, P.pcd),
+  };
+}
+
+// One physics step for a live ball; returns updated ball state.
+function stepBall(b, body, env, dt) {
+  if (b.done) return;
+  const pre = { y: b.y, v: b.v };
+  const nxt = rk4(body, b.y, b.v, env.g, env.rho, dt);
+  b.y = nxt.y; b.v = nxt.v;
+  if (b.y <= 0 && b.v > 0) {                       // crossed the ground moving down
+    const f = pre.y / Math.max(pre.y - b.y, 1e-9); // fraction of step until contact
+    const vImpact = pre.v + (b.v - pre.v) * f;
+    if (b.fallTime === null) {
+      b.fallTime = b.t + dt * f;
+      b.impact = vImpact;
+    }
+    const e = b.rest;
+    if (P.bounce && e > 0 && vImpact * e > REST_V) {
+      b.y = 0; b.v = -e * vImpact; b.bounces++;
+    } else {
+      b.y = 0; b.v = 0; b.done = true;
+    }
+  }
+  b.t += dt;
+  if (b.t > T_CAP) b.done = true;
+}
+
+// Headless run of the current parameters: predicted landing per ball.
+// A coarser step than the live sim keeps slider drags snappy; RK4 at 1/120 s
+// agrees with the live run far below the two decimals we display.
+const PDT = 1 / 120;
+function predict() {
+  const env = envNow(), bodies = bodiesNow();
+  const out = {};
+  for (const key of ['tennis', 'paper']) {
+    const body = bodies[key];
+    let y = P.h0, v = 0, t = 0, landed = null, vi = null;
+    const vt = terminalVelocity(body, env.g, env.rho);
+    const floats = Number.isNaN(vt);
+    if (!floats) {
+      while (t < T_CAP) {
+        const pre = { y, v };
+        const nxt = rk4(body, y, v, env.g, env.rho, PDT);
+        y = nxt.y; v = nxt.v; t += PDT;
+        if (y <= 0 && v > 0) {
+          const f = pre.y / Math.max(pre.y - y, 1e-9);
+          landed = t - PDT + PDT * f;
+          vi = pre.v + (v - pre.v) * f;
+          break;
+        }
+      }
+    }
+    out[key] = { vt, floats, tLand: landed, vImpact: vi };
+  }
+  return out;
+}
+
+/* ============================== simulation ============================== */
+
+const SAMPLE_DT = 1 / 60;           // chart sampling cadence (simulated s)
+const TRAIL_DT = 0.12;              // strobe cadence (simulated s)
+
+let sim = null;                     // live state, rebuilt by resetSim()
+let phase = 'ready';                // ready | running | paused | finished
+let pred = null;                    // cached prediction for current params
+let announceTimer = 0;
+
+function freshBallState(restKey) {
+  return { y: P.h0, v: 0, t: 0, fallTime: null, impact: null,
+           bounces: 0, done: false, rest: P[restKey], trail: [] };
+}
+function resetSim() {
+  sim = {
+    t: 0,
+    acc: 0,
+    nextSample: 0,
+    nextTrail: 0,
+    env: envNow(),
+    bodies: bodiesNow(),
+    balls: { tennis: freshBallState('te'), paper: freshBallState('pe') },
+    S: { t: [], hT: [], hP: [], vT: [], vP: [] },
+    maxV: 0,
+    maxY: P.h0,
+    announced: { tennis: false, paper: false, result: false },
+  };
+  phase = 'ready';
+  syncButtons();
+}
+
+function recordSample() {
+  const { S, balls } = sim;
+  S.t.push(sim.t);
+  S.hT.push(balls.tennis.y); S.hP.push(balls.paper.y);
+  S.vT.push(Math.abs(balls.tennis.v)); S.vP.push(Math.abs(balls.paper.v));
+  sim.maxV = Math.max(sim.maxV, Math.abs(balls.tennis.v), Math.abs(balls.paper.v));
+  sim.maxY = Math.max(sim.maxY, balls.tennis.y, balls.paper.y);
+}
+
+function advance(realDt) {
+  sim.acc += Math.min(realDt, 0.1) * P.speed;
+  // restitution can be changed live between drops only; env/bodies frozen per drop
+  while (sim.acc >= DT) {
+    sim.acc -= DT;
+    stepBall(sim.balls.tennis, sim.bodies.tennis, sim.env, DT);
+    stepBall(sim.balls.paper,  sim.bodies.paper,  sim.env, DT);
+    sim.t += DT;
+    if (sim.t >= sim.nextSample) { recordSample(); sim.nextSample += SAMPLE_DT; }
+    if (P.trail && sim.t >= sim.nextTrail) {
+      for (const key of ['tennis', 'paper']) {
+        const b = sim.balls[key];
+        if (!b.done) b.trail.push(b.y);
+      }
+      sim.nextTrail += TRAIL_DT;
+    }
+    if (sim.balls.tennis.done && sim.balls.paper.done) {
+      recordSample();
+      phase = 'finished';
+      syncButtons();
+      break;
+    }
+  }
+}
+
+/* ========================== derived UI numbers ========================== */
+
+function fmt(x, digits = 2) {
+  return Number.isFinite(x) ? x.toFixed(digits) : '—';
+}
+function fmtVt(vt) {
+  if (Number.isNaN(vt)) return 'floats!';
+  if (!Number.isFinite(vt)) return '∞ (no air)';
+  return vt.toFixed(1) + ' m/s';
+}
+function fmtLand(p) {
+  if (p.floats) return 'never (floats)';
+  if (p.tLand === null) return '> ' + T_CAP + ' s';
+  return p.tLand.toFixed(2) + ' s';
+}
+
+function refreshDerived() {
+  pred = predict();
+  const bodies = bodiesNow();
+  $('tVt').textContent = fmtVt(pred.tennis.vt);
+  $('pVt').textContent = fmtVt(pred.paper.vt);
+  // results table — parameters + predictions
+  $('r-m-t').textContent = fmt(P.tm, 1) + ' g';
+  $('r-m-p').textContent = fmt(P.pm, 1) + ' g';
+  $('r-d-t').textContent = fmt(P.td, 1) + ' cm';
+  $('r-d-p').textContent = fmt(P.pd, 1) + ' cm';
+  $('r-cd-t').textContent = fmt(P.tcd, 2);
+  $('r-cd-p').textContent = fmt(P.pcd, 2);
+  $('r-a-t').textContent = (bodies.tennis.A * 1e4).toFixed(1) + ' cm²';
+  $('r-a-p').textContent = (bodies.paper.A * 1e4).toFixed(1) + ' cm²';
+  $('r-vt-t').textContent = fmtVt(pred.tennis.vt);
+  $('r-vt-p').textContent = fmtVt(pred.paper.vt);
+  $('r-pt-t').textContent = fmtLand(pred.tennis);
+  $('r-pt-p').textContent = fmtLand(pred.paper);
+}
+
+function refreshLive() {
+  const bt = sim.balls.tennis, bp = sim.balls.paper;
+  $('clock').textContent = 't = ' + sim.t.toFixed(2) + ' s';
+  $('tHeight').textContent = fmt(Math.max(0, bt.y)) + ' m';
+  $('pHeight').textContent = fmt(Math.max(0, bp.y)) + ' m';
+  $('tSpeed').textContent = fmt(Math.abs(bt.v), 1) + ' m/s';
+  $('pSpeed').textContent = fmt(Math.abs(bp.v), 1) + ' m/s';
+  $('tStatus').textContent = ballStatus(bt, pred.tennis);
+  $('pStatus').textContent = ballStatus(bp, pred.paper);
+  $('r-mt-t').textContent = bt.fallTime !== null ? bt.fallTime.toFixed(2) + ' s' : '—';
+  $('r-mt-p').textContent = bp.fallTime !== null ? bp.fallTime.toFixed(2) + ' s' : '—';
+  $('r-vi-t').textContent = bt.impact !== null ? bt.impact.toFixed(1) + ' m/s' : '—';
+  $('r-vi-p').textContent = bp.impact !== null ? bp.impact.toFixed(1) + ' m/s' : '—';
+  $('r-b-t').textContent = phase === 'ready' ? '—' : bt.bounces;
+  $('r-b-p').textContent = phase === 'ready' ? '—' : bp.bounces;
+  refreshRace(bt, bp);
+}
+
+function ballStatus(b, p) {
+  if (phase === 'ready') return 'ready';
+  if (b.fallTime !== null) {
+    return b.done ? 'landed at ' + b.fallTime.toFixed(2) + ' s' : 'bouncing…';
+  }
+  if (p.floats) return 'floating (buoyancy ≥ weight)';
+  return 'falling';
+}
+
+// Only touch the aria-live region when its message actually changes,
+// otherwise screen readers would re-announce it every animation frame.
+let raceHtml = '';
+function setRace(html) {
+  if (html === raceHtml) return;
+  raceHtml = html;
+  $('race').innerHTML = html;
+}
+function refreshRace(bt, bp) {
+  if (phase === 'ready') {
+    if (pred.tennis.tLand !== null && pred.paper.tLand !== null) {
+      const d = pred.paper.tLand - pred.tennis.tLand;
+      setRace(Math.abs(d) < 0.005
+        ? 'Prediction: a <b>dead heat</b> — without a difference in drag-to-weight, they land together. Press <b>Drop</b> to see it.'
+        : 'Prediction: the <b>' + (d > 0 ? 'tennis ball' : 'paper ball') + '</b> lands ' +
+          '<b>' + Math.abs(d).toFixed(2) + ' s</b> earlier (' +
+          pred.tennis.tLand.toFixed(2) + ' s vs ' + pred.paper.tLand.toFixed(2) + ' s). Press <b>Drop</b> to run it.');
+    } else {
+      setRace('Press <b>Drop</b> to start the race.');
+    }
+    return;
+  }
+  const t1 = bt.fallTime, t2 = bp.fallTime;
+  if (t1 !== null && t2 !== null) {
+    const d = t2 - t1;
+    setRace(Math.abs(d) < 0.005
+      ? '<b>Dead heat!</b> Both landed at ' + t1.toFixed(2) + ' s — with no air, mass doesn\'t matter.'
+      : '<b>' + (d > 0 ? 'Tennis ball wins' : 'Paper ball wins') + '</b> by ' + Math.abs(d).toFixed(2) +
+        ' s (' + t1.toFixed(2) + ' s vs ' + t2.toFixed(2) + ' s).');
+    announceOnce('result', $('race').textContent);
+  } else if (t1 !== null) {
+    setRace('Tennis ball down at <b>' + t1.toFixed(2) + ' s</b> — paper ball still in the air…');
+    announceOnce('tennis', 'Tennis ball landed after ' + t1.toFixed(2) + ' seconds.');
+  } else if (t2 !== null) {
+    setRace('Paper ball down at <b>' + t2.toFixed(2) + ' s</b> — tennis ball still in the air…');
+    announceOnce('paper', 'Paper ball landed after ' + t2.toFixed(2) + ' seconds.');
+  } else {
+    setRace('Falling…');
+  }
+}
+function announceOnce(key, msg) {
+  if (sim.announced[key]) return;
+  sim.announced[key] = true;
+  clearTimeout(announceTimer);
+  announceTimer = setTimeout(() => { $('announce').textContent = msg; }, 150);
+}
+
+/* =============================== theming ================================ */
+
+let theme = {};
+function readTheme() {
+  const cs = getComputedStyle(document.body);
+  const v = n => cs.getPropertyValue(n).trim();
+  theme = {
+    surface: v('--surface'), page: v('--page'), ink: v('--ink'), ink2: v('--ink-2'),
+    muted: v('--muted'), grid: v('--grid'), axis: v('--axis'),
+    tennis: v('--tennis'), paper: v('--paper'),
+    ballTennis: v('--ball-tennis'), ballTennisSeam: v('--ball-tennis-seam'),
+    ballPaper: v('--ball-paper'), ballPaperLine: v('--ball-paper-line'),
+    ballOutline: v('--ball-outline'),
+  };
+}
+const darkMq = window.matchMedia('(prefers-color-scheme: dark)');
+if (darkMq.addEventListener) darkMq.addEventListener('change', readTheme);
+
+/* ============================ canvas plumbing =========================== */
+
+function fitCanvas(canvas) {
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  const w = Math.max(1, Math.round(rect.width * dpr));
+  const h = Math.max(1, Math.round(rect.height * dpr));
+  if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return { ctx, w: rect.width, h: rect.height };
+}
+function niceStep(range, targetTicks) {
+  const raw = range / Math.max(1, targetTicks);
+  const mag = Math.pow(10, Math.floor(Math.log10(raw)));
+  const n = raw / mag;
+  return (n < 1.5 ? 1 : n < 3 ? 2 : n < 7 ? 5 : 10) * mag;
+}
+
+/* ================================ scene ================================= */
+
+const sceneCv = $('scene');
+// stable pseudo-random crumple shape for the paper ball
+const CRUMPLE = Array.from({ length: 13 }, (_, i) => 0.82 + 0.26 * Math.abs(Math.sin(i * 12.9898) * 43758.5453 % 1));
+
+function drawScene() {
+  const { ctx, w, h } = fitCanvas(sceneCv);
+  ctx.clearRect(0, 0, w, h);
+  ctx.fillStyle = theme.page;
+  ctx.fillRect(0, 0, w, h);
+
+  const padTop = 44, padBottom = 34, padLeft = 46, padRight = 12;
+  const plotH = h - padTop - padBottom;
+  const yMax = Math.max(sim.maxY, P.h0) * 1.02;
+  const yToPx = y => padTop + plotH * (1 - y / yMax);
+  const xT = padLeft + (w - padLeft - padRight) * 0.32;
+  const xP = padLeft + (w - padLeft - padRight) * 0.72;
+
+  // height ruler
+  ctx.strokeStyle = theme.grid;
+  ctx.fillStyle = theme.muted;
+  ctx.lineWidth = 1;
+  ctx.font = '11px system-ui, sans-serif';
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'middle';
+  const step = niceStep(yMax, 6);
+  for (let yv = 0; yv <= yMax + 1e-9; yv += step) {
+    const py = yToPx(yv);
+    ctx.beginPath();
+    ctx.moveTo(padLeft - 4, py);
+    ctx.lineTo(w - padRight, py);
+    ctx.stroke();
+    ctx.fillText(yv >= 10 || step >= 1 ? Math.round(yv) : yv.toFixed(1), padLeft - 8, py);
+  }
+  // start line at h0
+  ctx.strokeStyle = theme.axis;
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath();
+  ctx.moveTo(padLeft - 4, yToPx(P.h0));
+  ctx.lineTo(w - padRight, yToPx(P.h0));
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // ground
+  const gy = yToPx(0);
+  ctx.strokeStyle = theme.ink2;
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(padLeft - 4, gy); ctx.lineTo(w - padRight, gy); ctx.stroke();
+  ctx.strokeStyle = theme.axis;
+  ctx.lineWidth = 1;
+  for (let x = padLeft; x < w - padRight; x += 9) {
+    ctx.beginPath(); ctx.moveTo(x, gy + 2); ctx.lineTo(x - 6, gy + 10); ctx.stroke();
+  }
+
+  // lane labels with series chips
+  ctx.textBaseline = 'middle';
+  ctx.font = '600 12px system-ui, sans-serif';
+  for (const [x, color, name] of [[xT, theme.tennis, 'Tennis ball'], [xP, theme.paper, 'Paper ball']]) {
+    ctx.textAlign = 'center';
+    const tw = ctx.measureText(name).width;
+    ctx.fillStyle = color;
+    ctx.beginPath(); ctx.arc(x - tw / 2 - 9, 18, 4.5, 0, 7); ctx.fill();
+    ctx.fillStyle = theme.ink2;
+    ctx.fillText(name, x + 2, 18);
+  }
+
+  const mPerPx = yMax / plotH;
+  const rPx = (r) => clamp(r / mPerPx, 7, 26);
+
+  // strobe trails
+  if (P.trail) {
+    for (const [key, x] of [['tennis', xT], ['paper', xP]]) {
+      const b = sim.balls[key];
+      const col = key === 'tennis' ? theme.tennis : theme.paper;
+      b.trail.forEach((ty, i) => {
+        ctx.globalAlpha = 0.12 + 0.3 * (i / Math.max(1, b.trail.length));
+        ctx.fillStyle = col;
+        ctx.beginPath(); ctx.arc(x, yToPx(Math.max(0, ty)), 3, 0, 7); ctx.fill();
+      });
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  drawTennisBall(ctx, xT, yToPx(Math.max(0, sim.balls.tennis.y)), rPx(sim.bodies.tennis.r));
+  drawPaperBall(ctx, xP, yToPx(Math.max(0, sim.balls.paper.y)), rPx(sim.bodies.paper.r),
+                (P.h0 - sim.balls.paper.y) * 0.35);
+
+  // per-ball speed tags while in flight
+  ctx.font = '11px system-ui, sans-serif';
+  ctx.fillStyle = theme.muted;
+  ctx.textAlign = 'left';
+  for (const [key, x] of [['tennis', xT], ['paper', xP]]) {
+    const b = sim.balls[key];
+    if (phase !== 'ready' && !b.done) {
+      ctx.fillText(Math.abs(b.v).toFixed(1) + ' m/s',
+        x + rPx(sim.bodies[key].r) + 6, yToPx(Math.max(0, b.y)));
+    }
+  }
+}
+
+function drawTennisBall(ctx, x, y, r) {
+  y -= r;                                        // rest on the ground line
+  ctx.fillStyle = theme.ballTennis;
+  ctx.strokeStyle = theme.ballOutline;
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill(); ctx.stroke();
+  ctx.save();
+  ctx.beginPath(); ctx.arc(x, y, r - 0.5, 0, 7); ctx.clip();
+  ctx.strokeStyle = theme.ballTennisSeam;
+  ctx.lineWidth = Math.max(1.2, r * 0.13);
+  ctx.beginPath(); ctx.arc(x - r * 1.15, y, r * 1.45, -0.55, 0.55); ctx.stroke();
+  ctx.beginPath(); ctx.arc(x + r * 1.15, y, r * 1.45, Math.PI - 0.55, Math.PI + 0.55); ctx.stroke();
+  ctx.restore();
+}
+function drawPaperBall(ctx, x, y, r, rot) {
+  y -= r;
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(rot);
+  ctx.fillStyle = theme.ballPaper;
+  ctx.strokeStyle = theme.ballOutline;
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  CRUMPLE.forEach((f, i) => {
+    const a = (i / CRUMPLE.length) * Math.PI * 2;
+    const px = Math.cos(a) * r * f, py = Math.sin(a) * r * f;
+    i ? ctx.lineTo(px, py) : ctx.moveTo(px, py);
+  });
+  ctx.closePath(); ctx.fill(); ctx.stroke();
+  ctx.strokeStyle = theme.ballPaperLine;
+  ctx.lineWidth = 0.8;
+  for (const [i, j] of [[0, 5], [2, 8], [4, 10], [6, 12], [1, 9]]) {
+    const a1 = (i / CRUMPLE.length) * Math.PI * 2, a2 = (j / CRUMPLE.length) * Math.PI * 2;
+    ctx.beginPath();
+    ctx.moveTo(Math.cos(a1) * r * CRUMPLE[i] * 0.85, Math.sin(a1) * r * CRUMPLE[i] * 0.85);
+    ctx.lineTo(Math.cos(a2) * r * CRUMPLE[j] * 0.6, Math.sin(a2) * r * CRUMPLE[j] * 0.6);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+/* ================================ charts ================================ */
+
+function chartDomains() {
+  let tMax = 1;
+  if (pred.tennis.tLand !== null) tMax = Math.max(tMax, pred.tennis.tLand);
+  if (pred.paper.tLand !== null) tMax = Math.max(tMax, pred.paper.tLand);
+  tMax = Math.max(tMax * 1.05, sim.t * 1.02);
+  let vMax = 1;
+  if (pred.tennis.vImpact !== null) vMax = Math.max(vMax, pred.tennis.vImpact);
+  if (pred.paper.vImpact !== null) vMax = Math.max(vMax, pred.paper.vImpact);
+  for (const p of [pred.tennis, pred.paper]) {
+    if (Number.isFinite(p.vt) && p.tLand !== null) vMax = Math.max(vMax, p.vt);
+  }
+  vMax = Math.max(vMax * 1.12, sim.maxV * 1.05);
+  const yMax = Math.max(sim.maxY, P.h0) * 1.05;
+  return { tMax, vMax, yMax };
+}
+
+function makeChart(canvasId, tipId, seriesOf, yMaxOf, unit, guides) {
+  return { cv: $(canvasId), tip: $(tipId), seriesOf, yMaxOf, unit, guides, hoverT: null };
+}
+const charts = [
+  makeChart('chartH', 'tipH', S => [S.hT, S.hP], d => d.yMax, 'm', () => []),
+  makeChart('chartV', 'tipV', S => [S.vT, S.vP], d => d.vMax, 'm/s',
+    d => [pred.tennis, pred.paper]
+      .map((p, i) => ({ v: p.vt, color: i === 0 ? theme.tennis : theme.paper }))
+      .filter(g => Number.isFinite(g.v) && g.v <= d.vMax)),
+];
+
+const PADL = 44, PADR = 14, PADT = 10, PADB = 24;
+
+function drawChart(ch, dom) {
+  const { ctx, w, h } = fitCanvas(ch.cv);
+  ctx.clearRect(0, 0, w, h);
+  ctx.fillStyle = theme.surface;
+  ctx.fillRect(0, 0, w, h);
+  const pw = w - PADL - PADR, ph = h - PADT - PADB;
+  const yMax = ch.yMaxOf(dom), tMax = dom.tMax;
+  const X = t => PADL + pw * (t / tMax);
+  const Y = v => PADT + ph * (1 - v / yMax);
+
+  // grid + ticks
+  ctx.font = '11px system-ui, sans-serif';
+  ctx.lineWidth = 1;
+  const ys = niceStep(yMax, 4);
+  ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+  for (let v = 0; v <= yMax + 1e-9; v += ys) {
+    ctx.strokeStyle = theme.grid;
+    ctx.beginPath(); ctx.moveTo(PADL, Y(v)); ctx.lineTo(w - PADR, Y(v)); ctx.stroke();
+    ctx.fillStyle = theme.muted;
+    ctx.fillText(ys >= 1 ? Math.round(v) : v.toFixed(1), PADL - 6, Y(v));
+  }
+  const xs = niceStep(tMax, 6);
+  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  for (let t = 0; t <= tMax + 1e-9; t += xs) {
+    ctx.strokeStyle = theme.grid;
+    ctx.beginPath(); ctx.moveTo(X(t), PADT); ctx.lineTo(X(t), h - PADB); ctx.stroke();
+    ctx.fillStyle = theme.muted;
+    ctx.fillText((xs >= 1 ? Math.round(t) : t.toFixed(1)) + (t === 0 ? ' s' : ''), X(t), h - PADB + 5);
+  }
+  // baseline
+  ctx.strokeStyle = theme.axis;
+  ctx.beginPath(); ctx.moveTo(PADL, Y(0)); ctx.lineTo(w - PADR, Y(0)); ctx.stroke();
+
+  // terminal-velocity guides (dashed, series-colored)
+  for (const gd of ch.guides(dom)) {
+    ctx.strokeStyle = gd.color;
+    ctx.globalAlpha = 0.55;
+    ctx.setLineDash([5, 5]);
+    ctx.beginPath(); ctx.moveTo(PADL, Y(gd.v)); ctx.lineTo(w - PADR, Y(gd.v)); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = theme.muted;
+    ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+    ctx.fillText('terminal ' + gd.v.toFixed(1), PADL + 4, Y(gd.v) - 2);
+  }
+
+  const S = sim.S;
+  if (S.t.length < 2) {
+    ctx.fillStyle = theme.muted;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('Press Drop to draw the curves', PADL + pw / 2, PADT + ph / 2);
+    return;
+  }
+
+  // series lines
+  const series = ch.seriesOf(S);
+  const cols = [theme.tennis, theme.paper];
+  const names = ['Tennis', 'Paper'];
+  const endYs = [];
+  series.forEach((arr, si) => {
+    ctx.strokeStyle = cols[si];
+    ctx.lineWidth = 2;
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    for (let i = 0; i < arr.length; i++) {
+      const px = X(S.t[i]), py = Y(arr[i]);
+      i ? ctx.lineTo(px, py) : ctx.moveTo(px, py);
+    }
+    ctx.stroke();
+    endYs.push(Y(arr[arr.length - 1]));
+  });
+
+  // direct labels at line ends (ink text + colored chip): clamp into the plot
+  // first, then push apart — nudging before the clamp lets the clamp collapse
+  // both labels back onto the baseline when the lines end near y = 0.
+  const labYs = endYs.map(y => clamp(y, PADT + 6, h - PADB - 6));
+  if (Math.abs(labYs[0] - labYs[1]) < 13) {
+    const lower = labYs[0] >= labYs[1] ? 0 : 1;   // larger px value = lower on screen
+    labYs[lower] = clamp(Math.max(labYs[lower], PADT + 19), PADT + 19, h - PADB - 6);
+    labYs[1 - lower] = labYs[lower] - 13;
+  }
+  const endX = X(S.t[S.t.length - 1]);
+  ctx.font = '600 11px system-ui, sans-serif';
+  ctx.textBaseline = 'middle';
+  names.forEach((nm, si) => {
+    const ly = labYs[si];
+    const rightSide = endX < PADL + pw - 58;
+    ctx.textAlign = rightSide ? 'left' : 'right';
+    const tx = rightSide ? endX + 12 : endX - 12;
+    ctx.fillStyle = cols[si];
+    ctx.beginPath(); ctx.arc(rightSide ? endX + 6 : endX - 6, ly, 3.5, 0, 7); ctx.fill();
+    ctx.fillStyle = theme.ink2;
+    ctx.fillText(nm, tx, ly);
+  });
+
+  // crosshair + hover dots
+  if (ch.hoverT !== null && ch.hoverT >= 0 && ch.hoverT <= S.t[S.t.length - 1]) {
+    const i = nearestIndex(S.t, ch.hoverT);
+    const hx = X(S.t[i]);
+    ctx.strokeStyle = theme.axis;
+    ctx.beginPath(); ctx.moveTo(hx, PADT); ctx.lineTo(hx, h - PADB); ctx.stroke();
+    series.forEach((arr, si) => {
+      ctx.fillStyle = cols[si];
+      ctx.strokeStyle = theme.surface;
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(hx, Y(arr[i]), 4, 0, 7); ctx.fill(); ctx.stroke();
+    });
+    placeTooltip(ch, hx, S, i);
+  } else {
+    ch.tip.style.display = 'none';
+  }
+}
+
+function nearestIndex(ts, t) {
+  let lo = 0, hi = ts.length - 1;
+  while (hi - lo > 1) {
+    const mid = (lo + hi) >> 1;
+    (ts[mid] < t) ? lo = mid : hi = mid;
+  }
+  return (t - ts[lo] < ts[hi] - t) ? lo : hi;
+}
+
+function placeTooltip(ch, px, S, i) {
+  const [a, b] = ch.seriesOf(S);
+  ch.tip.innerHTML =
+    '<div class="row">t = <b>' + S.t[i].toFixed(2) + ' s</b></div>' +
+    '<div class="row"><span class="chip tennis"></span>Tennis <b>' + a[i].toFixed(2) + ' ' + ch.unit + '</b></div>' +
+    '<div class="row"><span class="chip paper"></span>Paper <b>' + b[i].toFixed(2) + ' ' + ch.unit + '</b></div>';
+  ch.tip.style.display = 'block';
+  const boxW = ch.tip.offsetWidth, cw = ch.cv.clientWidth;
+  ch.tip.style.left = (px + boxW + 18 > cw ? px - boxW - 10 : px + 10) + 'px';
+  ch.tip.style.top = '28px';
+}
+
+for (const ch of charts) {
+  ch.cv.addEventListener('pointermove', e => {
+    const r = ch.cv.getBoundingClientRect();
+    const dom = chartDomains();
+    ch.hoverT = ((e.clientX - r.left) - PADL) / (r.width - PADL - PADR) * dom.tMax;
+  });
+  ch.cv.addEventListener('pointerleave', () => { ch.hoverT = null; });
+}
+
+/* ============================== interaction ============================= */
+
+function syncButtons() {
+  $('btnDrop').textContent = phase === 'finished' ? 'Drop again' : 'Drop';
+  $('btnDrop').disabled = phase === 'running' || phase === 'paused';
+  $('btnPause').disabled = phase !== 'running' && phase !== 'paused';
+  $('btnPause').textContent = phase === 'paused' ? 'Resume' : 'Pause';
+}
+function doDrop() {
+  if (phase === 'finished') resetSim();
+  if (phase === 'ready') {
+    phase = 'running';
+    recordSample();                       // t = 0 sample
+    sim.nextSample = SAMPLE_DT;
+    syncButtons();
+  }
+}
+function doPause() {
+  if (phase === 'running') phase = 'paused';
+  else if (phase === 'paused') phase = 'running';
+  syncButtons();
+}
+$('btnDrop').addEventListener('click', doDrop);
+$('btnPause').addEventListener('click', doPause);
+$('btnReset').addEventListener('click', () => { resetSim(); });
+
+document.addEventListener('keydown', e => {
+  const tag = (e.target.tagName || '').toLowerCase();
+  if (tag === 'input' || tag === 'button' || tag === 'summary' || tag === 'textarea') return;
+  if (e.code === 'Space') {
+    e.preventDefault();
+    (phase === 'running' || phase === 'paused') ? doPause() : doDrop();
+  } else if (e.key === 'r' || e.key === 'R') {
+    resetSim();
+  }
+});
+
+/* ================================ main loop ============================= */
+
+let lastTs = null;
+function frame(ts) {
+  if (lastTs === null) lastTs = ts;
+  const realDt = (ts - lastTs) / 1000;
+  lastTs = ts;
+  if (phase === 'running') advance(realDt);
+  const dom = chartDomains();
+  drawScene();
+  for (const ch of charts) drawChart(ch, dom);
+  refreshLive();
+  requestAnimationFrame(frame);
+}
+
+/* ================================= boot ================================= */
+
+applyPreset('defaults');     // sets every P value, resets the sim, computes predictions
+readTheme();
+requestAnimationFrame(frame);
+
+})();
+</script>
+</body>
+</html>
